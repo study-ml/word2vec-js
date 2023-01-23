@@ -303,6 +303,24 @@ var w2v = (function() {
     return y * (1 - y);
   }
 
+  // function dsoftmax(arr) {
+  //   let len = arr.length;
+  //   let result = new Array(len);
+  //   for(let i = 0; i < len; i++) {
+  //     result[i] = new Array(len);
+  //   }
+  //   for(let i = 0; i < len; i++) {
+  //     for(let j = 0; j < len; j++) {
+  //       if(i === j) {
+  //         result[i][j] = arr[i] * (1 - arr[i]);
+  //       } else {
+  //         result[i][j] = - arr[i] * arr[j];
+  //       }
+  //     }
+  //   }
+  //   return result;
+  // }
+
   function feedforward(x) {
     x.forEach(function(ele, index) {
       inputLayer[index] = ele;
@@ -316,29 +334,82 @@ var w2v = (function() {
       hiddenLayer[i] = sigmoid(sum);
     }
 
+    // Use sigmoid instead
+    // for (var i=0; i<outputLayer.length; i++) {
+    //   var sum = 0.0;
+    //   for (var j=0; j<hiddenLayer.length; j++) {
+    //     sum += hiddenLayer[j] * secondMatrix[j][i];
+    //   }
+    //   outputLayer[i] = sigmoid(sum);
+    // }
+
+    // do softmax
+    var tmp1st = [];
+    var tmp2nd = [];
     for (var i=0; i<outputLayer.length; i++) {
       var sum = 0.0;
       for (var j=0; j<hiddenLayer.length; j++) {
         sum += hiddenLayer[j] * secondMatrix[j][i];
       }
-      outputLayer[i] = sigmoid(sum);
+      
+      if (i < oneHotSize) {
+        tmp1st.push(sum);
+      } else {
+        tmp2nd.push(sum);
+      }
     }
+
+    const res1st = softmax(tmp1st)
+    const res2nd = softmax(tmp2nd)
+    for (var i=0; i<outputLayer.length; i++) {
+      if (i < oneHotSize) {
+        outputLayer[i] = res1st[0][i] / res1st[1];
+      } else {
+        outputLayer[i] = res2nd[0][i-oneHotSize] / res2nd[1];
+      }
+    }
+    console.log(`The sum of 2 softmax result is ${outputLayer.reduce((partialSum, x) => partialSum + x, 0.0)}`)
   }
+
+  function softmax(tmp) {
+    tmp = tmp.map(x => {
+      const exp = Math.exp(x);
+      return (exp == Infinity) ? Number.MAX_VALUE : exp;
+    });
+    
+    var expSum = tmp.reduce((partialSum, x) => partialSum + x, 0.0);
+    expSum = (expSum == Infinity) ? Number.MAX_VALUE : expSum;
+
+    return [tmp, expSum]
+  }  
 
   function backpropagate(y, N=0.75, M=0.1) {
     var outputDeltas = Array(outputLayer.length).fill(0.0);
     var totalErrors = 0.0;
     y.forEach(function(ele, index) {
-      var error = ele - outputLayer[index];
+      const error = ele - outputLayer[index];
       totalErrors += Math.sqrt(Math.pow(error, 2));
 
-      outputDeltas[index] = error * dsigmoid(outputLayer[index]);
+      // outputDeltas[index] = error * dsigmoid(outputLayer[index]);
+      outputDeltas[index] = error;
     });
+
+    // The source code of word2vec does not do dsoftmax
+    // var softmaxDerivative = dsoftmax(outputLayer);
+    // var gradient = Array(outputDeltas.length).fill(0.0);
+    // for (var i=0; i<softmaxDerivative.length; i++) {
+    //   for (var j=0; j<softmaxDerivative[i].length; ++j) {
+    //     gradient[i] += outputDeltas[i] * softmaxDerivative[i][j];
+    //   }
+    // }
+
+    // console.log(gradient);
 
     var hiddenDeltas = Array(hiddenLayer.length).fill(0.0);
     for (var i=0; i<hiddenLayer.length; i++) {
       var error = 0.0;
       for (var j=0; j<outputLayer.length; j++) {
+        // error += gradient[j] * secondMatrix[i][j];
         error += outputDeltas[j] * secondMatrix[i][j];
       }
 
@@ -421,7 +492,7 @@ var w2v = (function() {
   }
 
   function runRotation() {
-    rotate('scene', Math.PI / 360);
+    rotate('scene', Math.PI / 1440);
     requestAnimationFrame(runRotation);
   }
 
