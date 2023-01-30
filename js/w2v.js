@@ -2,7 +2,7 @@ var w2v = (function() {
   const scaleNeuron = d3.scale.linear().domain([0.0, 1.0]).range([0, 255]);
   const scaleEdge = d3.scale.linear().domain([-5.5, 5.5]).range([0, 255]);
   
-  const width = $("#w2v-vis").parent().width();
+  const width = document.querySelector("#w2v-vis").parentNode.offsetWidth;
   const height = 976;
   const r = 10;
   const oneHotSize = 15;
@@ -93,9 +93,12 @@ var w2v = (function() {
     .classed("hidden-edge", true)
     .append("line");
 
-  $("#nn_errors").width = $("#article").width();
-  $("#nn_errors").height = $("#article").width();
-  let chart = new Chart($("#nn_errors"), {
+  const w2vVis = document.getElementById("nn_errors");
+  w2vVis.width = document.getElementById("article").width;
+  w2vVis.height = document.getElementById("article").width;
+  
+  const ctx = w2vVis.getContext("2d");
+  let chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: [],
@@ -137,8 +140,8 @@ var w2v = (function() {
 
   const layout = {
     dragmode: true,
-    height: $("#article").width(),
-    width: $("#article").width(),
+    height: document.getElementById("article").clientWidth,
+    width: document.getElementById("article").clientWidth,
     margin: {l: 0, r: 0, b: 0, t: 0},
     scene: {
       camera: {
@@ -270,7 +273,7 @@ var w2v = (function() {
   }
 
   function highlightWords(x, y1, y2) {
-    let corpus = $("#article").html();
+    let corpus = document.querySelector("#article").innerHTML;
     let tmp = corpus.split("<b>");
       
     tmp[0] = tmp[0].replace(/<[^>]*>?/gm, '');
@@ -284,7 +287,7 @@ var w2v = (function() {
       tmp[1] = tmp[1].replace(`${y1} ${x} ${y2}`, `<b>${y1} ${x} ${y2}</b>`);
     }
 
-    $("#article").html(tmp[0] + tmp[1]);
+    document.querySelector("#article").innerHTML = tmp[0] + tmp[1];
   }
 
   function redrawPositions(idx, text) {
@@ -488,7 +491,7 @@ var w2v = (function() {
   }
 
   function visualizeError(iter, total_iter, errors) {
-    $("#w2v_epoch").text(`epoch: ${iter} / ${total_iter}, error: ${errors}`);
+    document.querySelector("#w2v_epoch").textContent = `epoch: ${iter} / ${total_iter}, error: ${errors}`;
   }
 
   function runRotation() {
@@ -527,7 +530,7 @@ var w2v = (function() {
 
   let publicScope = {};
   publicScope.train = async function(iter=20) {
-    $("#w2v_training").prop('disabled', true);
+    document.getElementById("w2v_training").disabled = true;
 
     console.log(corpus);
     console.log(vectors);
@@ -557,7 +560,7 @@ var w2v = (function() {
   }
 
   publicScope.initNetwork = function() {
-    corpus = clean($("#article").text());
+    corpus = clean(document.getElementById("article").textContent);
     vectors = getOneHotVector(corpus); 
     data = getTrainingData(corpus);
 
