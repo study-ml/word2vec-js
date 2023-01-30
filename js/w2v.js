@@ -93,8 +93,8 @@ var w2v = (function() {
     .classed("hidden-edge", true)
     .append("line");
 
-  $("#nn_errors").width = $("#training_data").width();
-  $("#nn_errors").height = $("#training_data").width();
+  $("#nn_errors").width = $("#article").width();
+  $("#nn_errors").height = $("#article").width();
   let chart = new Chart($("#nn_errors"), {
     type: 'line',
     data: {
@@ -137,8 +137,8 @@ var w2v = (function() {
 
   const layout = {
     dragmode: true,
-    height: $("#training_data").width(),
-    width: $("#training_data").width(),
+    height: $("#article").width(),
+    width: $("#article").width(),
     margin: {l: 0, r: 0, b: 0, t: 0},
     scene: {
       camera: {
